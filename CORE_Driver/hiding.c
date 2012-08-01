@@ -147,20 +147,20 @@ void FreePIDList(DWORD *PID)
 	DWORD pid_found;
 	
 	do {
-		pBuffer = ExAllocatePoolWithTag (NonPagedPool, cbBuffer, 'agan'); 
+		pBuffer = ExAllocatePoolWithTag (NonPagedPool, cbBuffer, 'seth'); 
 		if (pBuffer == NULL) 
 			return;
 
 		Status = ZwQuerySystemInformation(SystemProcessesAndThreadsInformation, pBuffer, cbBuffer, NULL);
 		if (Status == STATUS_INFO_LENGTH_MISMATCH) {
-			ExFreePoolWithTag(pBuffer, 'agan'); 
-			cbBuffer *= 2; 
+			ExFreePoolWithTag(pBuffer, 'seth'); 
+			cbBuffer += 0x8000; 
 		} else if (!NT_SUCCESS(Status)) {
-			ExFreePoolWithTag(pBuffer, 'agan'); 
+			ExFreePoolWithTag(pBuffer, 'seth'); 
 			return; 
 		}
 	} while (Status == STATUS_INFO_LENGTH_MISMATCH);
-
+	
 	// Cicla la lista dei PID e cancella quelli che non sono più attivi
 	for (i=0; i<MAX_PID; i++) {
 		if (PID[i] == 0)
@@ -184,7 +184,7 @@ void FreePIDList(DWORD *PID)
 		if (!pid_found)
 			PID[i] = 0;
 	}
-	ExFreePoolWithTag(pBuffer, 'agan');
+	ExFreePoolWithTag(pBuffer, 'seth');
 	return;
 }
 
@@ -193,7 +193,7 @@ DWORD fix_preamble(unsigned char *func_addr, unsigned char *func_preamble)
 	PMDL func_mdl;
 	unsigned char *safe_func_addr;
 	DWORD i;
-	
+
 	if (func_preamble[0] == 0)
 		return 1;
 	
@@ -285,6 +285,7 @@ NTSTATUS do_ioctl_unhook(IN PDEVICE_OBJECT dobj, IN PIRP Irp, IN PIO_STACK_LOCAT
 		// In ogni caso ricopia il preambolo della funzione per evitare l'inline hookig
 		fix_preamble(unhook_struct->fix_up.func_addr, unhook_struct->fix_up.func_preamble);
 	}
+	
 	return STATUS_UNSUCCESSFUL;
 }
 
